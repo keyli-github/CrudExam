@@ -3,10 +3,16 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Middleware
 app.use(cors());
@@ -17,7 +23,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Configuración de multer para carga de imágenes
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
