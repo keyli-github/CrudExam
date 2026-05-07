@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Instituciones y Estudiantes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        form { margin-bottom: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        img { max-width: 100px; }
+    </style>
+</head>
+<body>
+    <h1>CRUD Instituciones y Estudiantes</h1>
+
+    <h2>Instituciones</h2>
+    <form id="institucionForm">
+        <input type="text" id="instNombre" placeholder="Nombre de Institución" required>
+        <button type="submit">Agregar Institución</button>
+    </form>
+    <table id="institucionesTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>Estudiantes</h2>
+    <form id="estudianteForm" enctype="multipart/form-data">
+        <input type="text" id="estNombre" placeholder="Nombre del Estudiante" required>
+        <select id="estInstitucion" required>
+            <option value="">Seleccionar Institución</option>
+        </select>
+        <input type="file" id="estFoto" accept="image/*" required>
+        <button type="submit">Agregar Estudiante</button>
+    </form>
+    <table id="estudiantesTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Foto</th>
+                <th>Institución</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+
+        // Funciones para Instituciones
+        async function loadInstituciones() {
+            const response = await fetch(`${API_BASE}/instituciones`);
+            const instituciones = await response.json();
+            const tbody = document.querySelector('#institucionesTable tbody');
+            tbody.innerHTML = '';
+            instituciones.forEach(inst => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${inst.id_institucion}</td>
+                        <td>${inst.nombre}</td>
+                        <td>
+                            <button onclick="editInstitucion(${inst.id_institucion}, '${inst.nombre}')">Editar</button>
+                            <button onclick="deleteInstitucion(${inst.id_institucion})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            updateInstitucionSelect(instituciones);
+        }
+
+        async function addInstitucion(nombre) {
+            await fetch(`${API_BASE}/instituciones`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre })
+            });
+            loadInstituciones();
+        }
+
+        async function updateInstitucion(id, nombre) {
+            const newNombre = prompt('Nuevo nombre:', nombre);
+            if (newNombre) {
+                await fetch(`${API_BASE}/instituciones/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre: newNombre })
+                });
+                loadInstituciones();
+            }
+        }
+
+        async function deleteInstitucion(id) {
+            if (confirm('¿Eliminar institución?')) {
+                await fetch(`${API_BASE}/instituciones/${id}`, { method: 'DELETE' });
+                loadInstituciones();
+                loadEstudiantes();
+            }
+        }
+
+        // Funciones para Estudiantes
+        async function loadEstudiantes() {
+            const response = await fetch(`${API_BASE}/estudiantes`);
+            const estudiantes = await response.json();
+            const tbody = document.querySelector('#estudiantesTable tbody');
+            tbody.innerHTML = '';
+            estudiantes.forEach(est => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${est.id_estudiante}</td>
+                        <td>${est.nombre}</td>
+                        <td><img src="/uploads/${est.foto}" alt="Foto"></td>
+                        <td>${est.institucion_nombre || 'N/A'}</td>
+                        <td>
+                            <button onclick="editEstudiante(${est.id_estudiante}, '${est.nombre}', ${est.id_institucion})">Editar</button>
+                            <button onclick="deleteEstudiante(${est.id_estudiante})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function addEstudiante(nombre, idInstitucion, foto) {
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('id_institucion', idInstitucion);
+            formData.append('foto', foto);
+            await fetch(`${API_BASE}/estudiantes`, {
+                method: 'POST',
+                body: formData
+            });
+            loadEstudiantes();
+        }
+
+        async function updateEstudiante(id, nombre, idInstitucion) {
+            const newNombre = prompt('Nuevo nombre:', nombre);
+            if (newNombre) {
+                const formData = new FormData();
+                formData.append('nombre', newNombre);
+                formData.append('id_institucion', idInstitucion);
+                await fetch(`${API_BASE}/estudiantes/${id}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+                loadEstudiantes();
+            }
+        }
+
+        async function deleteEstudiante(id) {
+            if (confirm('¿Eliminar estudiante?')) {
+                await fetch(`${API_BASE}/estudiantes/${id}`, { method: 'DELETE' });
+                loadEstudiantes();
+            }
+        }
+
+        function updateInstitucionSelect(instituciones) {
+            const select = document.getElementById('estInstitucion');
+            select.innerHTML = '<option value="">Seleccionar Institución</option>';
+            instituciones.forEach(inst => {
+                select.innerHTML += `<option value="${inst.id_institucion}">${inst.nombre}</option>`;
+            });
+        }
+
+        // Event listeners
+        document.getElementById('institucionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('instNombre').value;
+            addInstitucion(nombre);
+            e.target.reset();
+        });
+
+        document.getElementById('estudianteForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('estNombre').value;
+            const idInstitucion = document.getElementById('estInstitucion').value;
+            const foto = document.getElementById('estFoto').files[0];
+            addEstudiante(nombre, idInstitucion, foto);
+            e.target.reset();
+        });
+
+        // Cargar datos iniciales
+        loadInstituciones();
+        loadEstudiantes();
+    </script>
+</body>
+</html>
