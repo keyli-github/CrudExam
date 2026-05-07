@@ -80,23 +80,41 @@
         }
 
         async function addInstitucion(nombre) {
-            await fetch(`${API_BASE}/instituciones`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre })
-            });
-            loadInstituciones();
+            try {
+                const response = await fetch(`${API_BASE}/instituciones`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre })
+                });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || 'Error al crear institución');
+                }
+                loadInstituciones();
+            } catch (err) {
+                console.error('addInstitucion error:', err);
+                alert('Error al crear institución: ' + err.message);
+            }
         }
 
         async function updateInstitucion(id, nombre) {
             const newNombre = prompt('Nuevo nombre:', nombre);
             if (newNombre) {
-                await fetch(`${API_BASE}/instituciones/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre: newNombre })
-                });
-                loadInstituciones();
+                try {
+                    const response = await fetch(`${API_BASE}/instituciones/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre: newNombre })
+                    });
+                    if (!response.ok) {
+                        const error = await response.text();
+                        throw new Error(error || 'Error al actualizar institución');
+                    }
+                    loadInstituciones();
+                } catch (err) {
+                    console.error('updateInstitucion error:', err);
+                    alert('Error al actualizar institución: ' + err.message);
+                }
             }
         }
 
@@ -131,28 +149,46 @@
         }
 
         async function addEstudiante(nombre, idInstitucion, foto) {
-            const formData = new FormData();
-            formData.append('nombre', nombre);
-            formData.append('id_institucion', idInstitucion);
-            formData.append('foto', foto);
-            await fetch(`${API_BASE}/estudiantes`, {
-                method: 'POST',
-                body: formData
-            });
-            loadEstudiantes();
+            try {
+                const formData = new FormData();
+                formData.append('nombre', nombre);
+                formData.append('id_institucion', idInstitucion);
+                formData.append('foto', foto);
+                const response = await fetch(`${API_BASE}/estudiantes`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || 'Error al crear estudiante');
+                }
+                loadEstudiantes();
+            } catch (err) {
+                console.error('addEstudiante error:', err);
+                alert('Error al crear estudiante: ' + err.message);
+            }
         }
 
         async function updateEstudiante(id, nombre, idInstitucion) {
             const newNombre = prompt('Nuevo nombre:', nombre);
             if (newNombre) {
-                const formData = new FormData();
-                formData.append('nombre', newNombre);
-                formData.append('id_institucion', idInstitucion);
-                await fetch(`${API_BASE}/estudiantes/${id}`, {
-                    method: 'PUT',
-                    body: formData
-                });
-                loadEstudiantes();
+                try {
+                    const formData = new FormData();
+                    formData.append('nombre', newNombre);
+                    formData.append('id_institucion', idInstitucion);
+                    const response = await fetch(`${API_BASE}/estudiantes/${id}`, {
+                        method: 'PUT',
+                        body: formData
+                    });
+                    if (!response.ok) {
+                        const error = await response.text();
+                        throw new Error(error || 'Error al actualizar estudiante');
+                    }
+                    loadEstudiantes();
+                } catch (err) {
+                    console.error('updateEstudiante error:', err);
+                    alert('Error al actualizar estudiante: ' + err.message);
+                }
             }
         }
 

@@ -114,10 +114,12 @@ app.get('/api/estudiantes', async (req, res) => {
 app.post('/api/estudiantes', upload.single('foto'), async (req, res) => {
   const { nombre, id_institucion } = req.body;
   const foto = req.file ? req.file.filename : null;
+  console.log('POST /api/estudiantes body=', req.body, 'file=', req.file ? req.file.filename : null);
   try {
     const result = await pool.query('INSERT INTO estudiantes (nombre, foto, id_institucion) VALUES ($1, $2, $3) RETURNING id_estudiante', [nombre, foto, id_institucion]);
     res.json({ id: result.rows[0].id_estudiante, nombre, foto, id_institucion });
   } catch (err) {
+    console.error('Error en POST /api/estudiantes', err);
     res.status(500).json({ error: err.message });
   }
 });
